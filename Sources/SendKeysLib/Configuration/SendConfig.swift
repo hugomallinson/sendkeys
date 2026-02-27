@@ -7,11 +7,12 @@ struct SendConfig: Codable {
     var remap: [String: String]?
     var targeted: Bool?
     var terminateCommand: String?
+    var window: String?
 
     init(
         activate: Bool? = nil, animationInterval: Double? = nil, delay: Double? = nil, initialDelay: Double? = nil,
         keyboardLayout: KeyMappings.Layouts? = nil, remap: [String: String]? = nil, targeted: Bool? = nil,
-        terminateCommand: String? = nil
+        terminateCommand: String? = nil, window: String? = nil
     ) {
         self.activate = activate
         self.animationInterval = animationInterval
@@ -21,6 +22,7 @@ struct SendConfig: Codable {
         self.remap = remap
         self.targeted = targeted
         self.terminateCommand = terminateCommand
+        self.window = window
     }
 
     func merge(with other: SendConfig?) -> SendConfig {

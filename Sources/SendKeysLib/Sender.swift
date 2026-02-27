@@ -17,6 +17,10 @@ public struct Sender: ParsableCommand {
         help: "Process id of a running application to send keys to.")
     var processId: Int?
 
+    @Option(
+        name: NameSpecification([.customLong("window")]), help: "Name of the window to send keystrokes to.")
+    var targetWindow: String?
+
     @Flag(
         name: .long, inversion: FlagInversion.prefixedNo,
         help: "Activate the specified app or process before sending commands.")
@@ -105,6 +109,30 @@ public struct Sender: ParsableCommand {
         if targeted {
             if app == nil {
                 throw RuntimeError("Application could not be found.")
+            }
+            if targetWindow != nil {
+                let pid = app!.processIdentifier
+                let appRef = AXUIElementCreateApplication(pid)
+                var windowList: CFTypeRef?
+                let result = AXUIElementCopyAttributeValue(appRef, kAXWindowsAttribute as CFString, &windowList)
+                guard result == .success, let windows = windowList as? [AXUIElement] else {
+                    throw RuntimeError("Failed to retrieve windows.")
+                }
+                var foundWindow: Bool = false
+                for window in windows {
+                    var title: CFTypeRef?
+                    AXUIElementCopyAttributeValue(window, kAXTitleAttribute as CFString, &title)
+
+                    if let titleString = title as? String, titleString.starts(with: targetWindow ?? "") {
+                        AXUIElementSetAttributeValue(window, kAXMainAttribute as CFString, kCFBooleanTrue)
+                        AXUIElementSetAttributeValue(window, kAXFocusedAttribute as CFString, kCFBooleanTrue)
+                        foundWindow = true
+                        break
+                    }
+                }
+                if !foundWindow {
+                    throw RuntimeError("Target window could not be found.")
+                }
             }
             keyPresser = KeyPresser(app: app)
         } else {
